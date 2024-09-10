@@ -23,11 +23,11 @@ const MicroStrategyDashboard: React.FC = () => {
     const createAuthToken = async (): Promise<string | undefined> => {
       const options: RequestInit = {
         method: "POST",
-        credentials: "include",
+        credentials: "include", // Ensure cookies are included
         mode: "cors",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          loginMode: 16,
+          loginMode: 16, // LDAP login mode
           username: prompt("Please enter your LDAP username"),
           password: prompt("Please enter your LDAP password"),
         }),
@@ -40,7 +40,10 @@ const MicroStrategyDashboard: React.FC = () => {
         );
         if (response.ok) {
           console.log("A new LDAP login session has been created successfully");
-          return response.headers.get("x-mstr-authtoken") ?? undefined;
+          const authToken = response.headers.get("x-mstr-authtoken");
+          const jsonResponse = await response.json();
+          console.log("Response data:", jsonResponse); // Capture more data if needed
+          return authToken ?? undefined;
         }
         console.log(
           "Failed to create new auth token. Status:",
@@ -57,23 +60,26 @@ const MicroStrategyDashboard: React.FC = () => {
 
     const login = async (): Promise<string | undefined> => {
       console.log("Attempting to log in using LDAP...");
-      let authToken = await createAuthToken();
-      let retries = 3;
-      while (!authToken && retries > 0) {
-        console.log(`Login failed. Retrying... (${retries} attempts left)`);
-        authToken = await createAuthToken();
-        retries--;
-      }
+      const authToken = await createAuthToken();
+
       if (authToken) {
+        // Store auth token in cookie for later use
+        document.cookie = `authToken=${authToken}; path=/`;
         console.log("Successfully created new auth token");
         return authToken;
       }
-      console.log("Failed to create new auth token after multiple attempts");
+      console.log("Failed to create new auth token");
       return undefined;
     };
 
     const initDashboard = async () => {
       if (!containerRef.current || !window.microstrategy) return;
+
+      const authToken = await login();
+      if (!authToken) {
+        console.log("Failed to retrieve auth token");
+        return;
+      }
 
       const config = {
         url: url,
@@ -88,10 +94,8 @@ const MicroStrategyDashboard: React.FC = () => {
         navigationBar: {
           enabled: false,
         },
-        errorHandler: (error: any) => {
-          console.error("MicroStrategy Dashboard Error:", error);
-          // You can add custom error handling here, such as displaying an error message to the user
-        },
+        // Pass the auth token here
+        authToken: authToken,
       };
 
       try {
