@@ -27,7 +27,7 @@ const MicroStrategyDashboard: React.FC = () => {
         mode: "cors",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          loginMode: 16, // Corrected LDAP login mode
+          loginMode: 16,
           username: prompt("Please enter your LDAP username"),
           password: prompt("Please enter your LDAP password"),
         }),
@@ -57,12 +57,18 @@ const MicroStrategyDashboard: React.FC = () => {
 
     const login = async (): Promise<string | undefined> => {
       console.log("Attempting to log in using LDAP...");
-      const authToken = await createAuthToken();
+      let authToken = await createAuthToken();
+      let retries = 3;
+      while (!authToken && retries > 0) {
+        console.log(`Login failed. Retrying... (${retries} attempts left)`);
+        authToken = await createAuthToken();
+        retries--;
+      }
       if (authToken) {
         console.log("Successfully created new auth token");
         return authToken;
       }
-      console.log("Failed to create new auth token");
+      console.log("Failed to create new auth token after multiple attempts");
       return undefined;
     };
 
@@ -81,6 +87,10 @@ const MicroStrategyDashboard: React.FC = () => {
         getLoginToken: login,
         navigationBar: {
           enabled: false,
+        },
+        errorHandler: (error: any) => {
+          console.error("MicroStrategy Dashboard Error:", error);
+          // You can add custom error handling here, such as displaying an error message to the user
         },
       };
 
