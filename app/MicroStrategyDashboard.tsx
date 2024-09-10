@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 
 declare global {
@@ -9,6 +9,7 @@ declare global {
 
 const MicroStrategyDashboard: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [authToken, setAuthToken] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const baseServerUrl = "https://demo.microstrategy.com";
@@ -16,6 +17,29 @@ const MicroStrategyDashboard: React.FC = () => {
     const url = `${baseServerUrl}/${libraryName}/app/EC70648611E7A2F962E90080EFD58751/837B57D711E941BF000000806FA1298F`;
 
     let dashboard: any;
+
+    const verifyAuthToken = async (token: string): Promise<boolean> => {
+      const options: RequestInit = {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+        headers: {
+          "content-type": "application/json",
+          "X-MSTR-AuthToken": token,
+        },
+      };
+
+      try {
+        const response = await fetch(
+          `${baseServerUrl}/${libraryName}/api/sessions`,
+          options
+        );
+        return response.ok;
+      } catch (error) {
+        console.error("Failed to verify auth token:", error);
+        return false;
+      }
+    };
 
     const getAuthToken = async (): Promise<string | undefined> => {
       const options: RequestInit = {
@@ -30,8 +54,14 @@ const MicroStrategyDashboard: React.FC = () => {
           `${baseServerUrl}/${libraryName}/api/auth/token`,
           options
         );
-        if (response.ok)
-          return response.headers.get("x-mstr-authtoken") ?? undefined;
+        if (response.ok) {
+          const token = response.headers.get("x-mstr-authtoken") ?? undefined;
+          if (token && (await verifyAuthToken(token))) {
+            console.log("Existing auth token verified successfully");
+            return token;
+          }
+          console.log("Existing auth token failed verification");
+        }
         console.log(
           "Failed to get existing auth token. Status:",
           response.status
@@ -62,10 +92,12 @@ const MicroStrategyDashboard: React.FC = () => {
           options
         );
         if (response.ok) {
-          console.log(
-            "A new standard login session has been created successfully"
-          );
-          return response.headers.get("x-mstr-authtoken") ?? undefined;
+          const token = response.headers.get("x-mstr-authtoken") ?? undefined;
+          if (token && (await verifyAuthToken(token))) {
+            console.log("New auth token created and verified successfully");
+            return token;
+          }
+          console.log("New auth token failed verification");
         }
         console.log(
           "Failed to create new auth token. Status:",
@@ -82,18 +114,16 @@ const MicroStrategyDashboard: React.FC = () => {
 
     const login = async (): Promise<string | undefined> => {
       console.log("Attempting to log in...");
-      let authToken = await getAuthToken();
-      if (authToken) {
-        console.log("An existing login session has been found, logging in");
-        return authToken;
+      let token = await getAuthToken();
+      if (!token) {
+        console.log("No existing session found, creating new auth token...");
+        token = await createAuthToken();
       }
-      console.log("No existing session found, creating new auth token...");
-      authToken = await createAuthToken();
-      if (authToken) {
-        console.log("Successfully created new auth token");
-        return authToken;
+      if (token) {
+        setAuthToken(token);
+        return token;
       }
-      console.log("Failed to create new auth token");
+      console.log("Failed to obtain valid auth token");
       return undefined;
     };
 
@@ -109,7 +139,7 @@ const MicroStrategyDashboard: React.FC = () => {
           window.microstrategy.dossier.CustomAuthenticationType.AUTH_TOKEN,
         enableCustomAuthentication: true,
         enableResponsive: true,
-        getLoginToken: login,
+        getLoginToken: () => Promise.resolve(authToken),
         navigationBar: {
           enabled: false,
         },
@@ -123,10 +153,12 @@ const MicroStrategyDashboard: React.FC = () => {
       }
     };
 
-    if (window.microstrategy) {
+    if (window.microstrategy && authToken) {
       initDashboard();
+    } else if (window.microstrategy) {
+      login();
     }
-  }, []);
+  }, [authToken]);
 
   return (
     <>
