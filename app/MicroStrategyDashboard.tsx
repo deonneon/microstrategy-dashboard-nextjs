@@ -23,11 +23,11 @@ const MicroStrategyDashboard: React.FC = () => {
     const createAuthToken = async (): Promise<string | undefined> => {
       const options: RequestInit = {
         method: "POST",
-        credentials: "include", // Ensure cookies are included
+        credentials: "include",
         mode: "cors",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          loginMode: 16, // LDAP login mode
+          loginMode: 16, // Corrected LDAP login mode
           username: prompt("Please enter your LDAP username"),
           password: prompt("Please enter your LDAP password"),
         }),
@@ -40,10 +40,7 @@ const MicroStrategyDashboard: React.FC = () => {
         );
         if (response.ok) {
           console.log("A new LDAP login session has been created successfully");
-          const authToken = response.headers.get("x-mstr-authtoken");
-          const jsonResponse = await response.json();
-          console.log("Response data:", jsonResponse); // Capture more data if needed
-          return authToken ?? undefined;
+          return response.headers.get("x-mstr-authtoken") ?? undefined;
         }
         console.log(
           "Failed to create new auth token. Status:",
@@ -61,10 +58,7 @@ const MicroStrategyDashboard: React.FC = () => {
     const login = async (): Promise<string | undefined> => {
       console.log("Attempting to log in using LDAP...");
       const authToken = await createAuthToken();
-
       if (authToken) {
-        // Store auth token in cookie for later use
-        document.cookie = `authToken=${authToken}; path=/`;
         console.log("Successfully created new auth token");
         return authToken;
       }
@@ -74,12 +68,6 @@ const MicroStrategyDashboard: React.FC = () => {
 
     const initDashboard = async () => {
       if (!containerRef.current || !window.microstrategy) return;
-
-      const authToken = await login();
-      if (!authToken) {
-        console.log("Failed to retrieve auth token");
-        return;
-      }
 
       const config = {
         url: url,
@@ -94,8 +82,6 @@ const MicroStrategyDashboard: React.FC = () => {
         navigationBar: {
           enabled: false,
         },
-        // Pass the auth token here
-        authToken: authToken,
       };
 
       try {
