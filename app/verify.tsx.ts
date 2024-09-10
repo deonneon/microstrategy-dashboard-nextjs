@@ -4,14 +4,14 @@ import Script from "next/script";
 const MicroStrategyAuth: React.FC = () => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [headerResponse, setHeaderResponse] = useState<Headers | null>(null);
+  const [cookieResponse, setCookieResponse] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!scriptLoaded) return;
-
     const baseServerUrl = "https://demo.microstrategy.com";
     const libraryName = "MicroStrategyLibraryInsights";
 
-    const createAuthToken = async (): Promise<string | null> => {
+    const createAuthToken = async (): Promise<Response | null> => {
       const options: RequestInit = {
         method: "POST",
         credentials: "include",
@@ -29,10 +29,12 @@ const MicroStrategyAuth: React.FC = () => {
           `${baseServerUrl}/${libraryName}/api/auth/login`,
           options
         );
+
         if (response.ok) {
           console.log("LDAP login successful");
-          return response.headers.get("x-mstr-authtoken");
+          return response;
         }
+
         console.log("Failed to create auth token. Status:", response.status);
         const json = await response.json();
         console.log("Error details:", json);
@@ -44,10 +46,15 @@ const MicroStrategyAuth: React.FC = () => {
     };
 
     const getAndVerifyToken = async () => {
-      const token = await createAuthToken();
-      if (token) {
+      const response = await createAuthToken();
+      if (response) {
+        const token = response.headers.get("x-mstr-authtoken");
         setAuthToken(token);
+        setHeaderResponse(response.headers);
+        setCookieResponse(response.headers.get("set-cookie"));
         console.log("Auth token obtained:", token);
+        console.log("Headers:", response.headers);
+        console.log("Cookies:", response.headers.get("set-cookie"));
       } else {
         console.log("Failed to obtain auth token");
       }
@@ -61,13 +68,19 @@ const MicroStrategyAuth: React.FC = () => {
       <Script
         src="https://demo.microstrategy.com/MicroStrategyLibraryInsights/javascript/embeddinglib.js"
         strategy="beforeInteractive"
-        onLoad={() => {
-          console.log("MicroStrategy script loaded");
-          setScriptLoaded(true);
-        }}
       />
       {authToken ? (
-        <p>Authentication token obtained successfully</p>
+        <div>
+          <p>Authentication token obtained successfully</p>
+          <p>Auth Token: {authToken}</p>
+          <p>
+            Headers:{" "}
+            {JSON.stringify(
+              Object.fromEntries(headerResponse?.entries() || [])
+            )}
+          </p>
+          <p>Cookies: {cookieResponse}</p>
+        </div>
       ) : (
         <p>Waiting for authentication...</p>
       )}
