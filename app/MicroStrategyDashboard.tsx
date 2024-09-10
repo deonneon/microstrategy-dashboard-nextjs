@@ -32,10 +32,14 @@ const MicroStrategyDashboard: React.FC = () => {
         );
         if (response.ok)
           return response.headers.get("x-mstr-authtoken") ?? undefined;
-        const json = await response.json();
-        console.log(json);
+        console.log(
+          "Failed to get existing auth token. Status:",
+          response.status
+        );
+        return undefined;
       } catch (error) {
         console.error("Failed to retrieve authToken with error:", error);
+        return undefined;
       }
     };
 
@@ -59,24 +63,38 @@ const MicroStrategyDashboard: React.FC = () => {
         );
         if (response.ok) {
           console.log(
-            "A new standard login session has been created successfully, logging in"
+            "A new standard login session has been created successfully"
           );
           return response.headers.get("x-mstr-authtoken") ?? undefined;
         }
+        console.log(
+          "Failed to create new auth token. Status:",
+          response.status
+        );
         const json = await response.json();
-        console.log(json);
+        console.log("Error details:", json);
+        return undefined;
       } catch (error) {
         console.error("Failed Standard Login with error:", error);
+        return undefined;
       }
     };
 
     const login = async (): Promise<string | undefined> => {
+      console.log("Attempting to log in...");
       let authToken = await getAuthToken();
       if (authToken) {
         console.log("An existing login session has been found, logging in");
         return authToken;
       }
-      return await createAuthToken();
+      console.log("No existing session found, creating new auth token...");
+      authToken = await createAuthToken();
+      if (authToken) {
+        console.log("Successfully created new auth token");
+        return authToken;
+      }
+      console.log("Failed to create new auth token");
+      return undefined;
     };
 
     const initDashboard = async () => {
@@ -99,8 +117,9 @@ const MicroStrategyDashboard: React.FC = () => {
 
       try {
         dashboard = await window.microstrategy.dossier.create(config);
+        console.log("Dashboard created successfully");
       } catch (error) {
-        console.error(error);
+        console.error("Failed to create dashboard:", error);
       }
     };
 
