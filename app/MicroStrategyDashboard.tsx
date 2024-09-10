@@ -1,123 +1,121 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import Script from "next/script";
 
 declare global {
   interface Window {
-    microstrategy: {
-      dossier: {
-        create: (config: MicroStrategyConfig) => void;
-      };
-      serverProxy: {
-        login: (config: LoginConfig) => Promise<string>;
-        getSessionInfo: () => Promise<SessionInfo>;
-      };
-    };
+    microstrategy: any;
   }
 }
 
-interface MicroStrategyConfig {
-  url: string;
-  dossier: string;
-  placeholder: string;
-  navigationBar: {
-    enabled: boolean;
-    gotoLibrary: boolean;
-    title: boolean;
-    toc: true;
-    reset: boolean;
-    reprompt: boolean;
-    share: boolean;
-    comment: boolean;
-  };
-  enableCustomAuthentication?: boolean;
-  customAuthenticationType?: string;
-  getLoginToken?: () => Promise<string>;
-}
-
-interface LoginConfig {
-  url: string;
-  loginMode: number;
-  username: string;
-  password: string;
-}
-
-interface SessionInfo {
-  authToken: string;
-}
-
 const MicroStrategyDashboard: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authToken, setAuthToken] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const login = async (): Promise<void> => {
-      if (window.microstrategy) {
-        const loginConfig: LoginConfig = {
-          url: "YOUR_MICROSTRATEGY_SERVER_URL",
-          loginMode: 1, // 1 for LDAP
-          username: "YOUR_LDAP_USERNAME",
-          password: "YOUR_LDAP_PASSWORD",
-        };
+    const baseServerUrl = "https://demo.microstrategy.com";
+    const libraryName = "MicroStrategyLibraryInsights";
+    const url = `${baseServerUrl}/${libraryName}/app/EC70648611E7A2F962E90080EFD58751/837B57D711E941BF000000806FA1298F`;
 
-        try {
-          await window.microstrategy.serverProxy.login(loginConfig);
-          const sessionInfo =
-            await window.microstrategy.serverProxy.getSessionInfo();
-          setAuthToken(sessionInfo.authToken);
-          setIsLoggedIn(true);
-        } catch (error) {
-          console.error("Login failed:", error);
-        }
+    let dashboard: any;
+
+    const getAuthToken = async (): Promise<string | undefined> => {
+      const options: RequestInit = {
+        method: "GET",
+        credentials: "include",
+        mode: "cors",
+        headers: { "content-type": "application/json" },
+      };
+
+      try {
+        const response = await fetch(
+          `${baseServerUrl}/${libraryName}/api/auth/token`,
+          options
+        );
+        if (response.ok)
+          return response.headers.get("x-mstr-authtoken") ?? undefined;
+        const json = await response.json();
+        console.log(json);
+      } catch (error) {
+        console.error("Failed to retrieve authToken with error:", error);
       }
     };
 
-    const initDashboard = (): void => {
-      if (window.microstrategy && isLoggedIn && authToken) {
-        const config: MicroStrategyConfig = {
-          url: "YOUR_MICROSTRATEGY_SERVER_URL",
-          dossier: "YOUR_DOSSIER_ID",
-          placeholder: "dossier-container",
-          navigationBar: {
-            enabled: true,
-            gotoLibrary: true,
-            title: true,
-            toc: true,
-            reset: true,
-            reprompt: true,
-            share: true,
-            comment: true,
-          },
-          enableCustomAuthentication: true,
-          customAuthenticationType: "token",
-          getLoginToken: async () => authToken,
-        };
-        window.microstrategy.dossier.create(config);
+    const createAuthToken = async (): Promise<string | undefined> => {
+      const options: RequestInit = {
+        method: "POST",
+        credentials: "include",
+        mode: "cors",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          loginMode: 1,
+          username: prompt("Please enter your username"),
+          password: prompt("Please enter your password"),
+        }),
+      };
+
+      try {
+        const response = await fetch(
+          `${baseServerUrl}/${libraryName}/api/auth/login`,
+          options
+        );
+        if (response.ok) {
+          console.log(
+            "A new standard login session has been created successfully, logging in"
+          );
+          return response.headers.get("x-mstr-authtoken") ?? undefined;
+        }
+        const json = await response.json();
+        console.log(json);
+      } catch (error) {
+        console.error("Failed Standard Login with error:", error);
+      }
+    };
+
+    const login = async (): Promise<string | undefined> => {
+      let authToken = await getAuthToken();
+      if (authToken) {
+        console.log("An existing login session has been found, logging in");
+        return authToken;
+      }
+      return await createAuthToken();
+    };
+
+    const initDashboard = async () => {
+      if (!containerRef.current || !window.microstrategy) return;
+
+      const config = {
+        url: url,
+        placeholder: containerRef.current,
+        containerHeight: "600px",
+        containerWidth: "800px",
+        customAuthenticationType:
+          window.microstrategy.dossier.CustomAuthenticationType.AUTH_TOKEN,
+        enableCustomAuthentication: true,
+        enableResponsive: true,
+        getLoginToken: login,
+        navigationBar: {
+          enabled: false,
+        },
+      };
+
+      try {
+        dashboard = await window.microstrategy.dossier.create(config);
+      } catch (error) {
+        console.error(error);
       }
     };
 
     if (window.microstrategy) {
-      login().then(() => {
-        if (isLoggedIn && authToken) {
-          initDashboard();
-        }
-      });
+      initDashboard();
     }
-  }, [isLoggedIn, authToken]);
+  }, []);
 
   return (
     <>
       <Script
-        src="https://env-XXXXX.customer.cloud.microstrategy.com/MicroStrategyLibrary/javascript/embeddinglib.js"
-        strategy="lazyOnload"
+        src="https://demo.microstrategy.com/MicroStrategyLibraryInsights/javascript/embeddinglib.js"
+        onLoad={() => console.log("MicroStrategy script loaded")}
       />
-      {isLoggedIn ? (
-        <div
-          id="dossier-container"
-          style={{ width: "100%", height: "600px" }}
-        ></div>
-      ) : (
-        <div>Logging in...</div>
-      )}
+      <div ref={containerRef} id="embedding-dossier-container"></div>
     </>
   );
 };
