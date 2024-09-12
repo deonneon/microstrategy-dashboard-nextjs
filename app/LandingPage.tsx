@@ -85,13 +85,22 @@ export default function LandingPage() {
         {searchResults.length > 0 && (
           <div className="mb-6">
             <h2 className="text-2xl font-semibold mb-2">Search Results:</h2>
-            <ul className="space-y-2">
+            <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
               {searchResults.map((doc) => (
-                <li key={doc.id} className="bg-gray-50 p-2 rounded text-left">
-                  <span className="font-medium">{doc.title}</span> -{" "}
-                  {doc.author}
-                  <div className="text-xs text-gray-500">
-                    {doc.tags.join(", ")}
+                <li key={doc.id} className="p-3 bg-white hover:bg-gray-50">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium">{doc.title}</span>
+                    <span className="text-sm text-gray-500">{doc.author}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {doc.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </li>
               ))}
@@ -108,17 +117,27 @@ export default function LandingPage() {
             Most Visited Documents
           </h2>
           {mostVisitedDocs.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
               {mostVisitedDocs.map((doc, index) => (
-                <li
-                  key={doc.id}
-                  className="bg-gray-50 p-2 rounded flex items-center text-left"
-                >
-                  <span className="font-bold mr-2 text-lg">{index + 1}.</span>
-                  <div className="flex-grow">
-                    <div className="font-medium">{doc.title}</div>
-                    <div className="text-sm text-gray-600">
-                      {doc.author} · {doc.visits} visits
+                <li key={doc.id} className="p-3 bg-white hover:bg-gray-50">
+                  <div className="flex items-center mb-1">
+                    <span className="font-bold mr-2 text-lg">{index + 1}.</span>
+                    <span className="font-medium flex-grow">{doc.title}</span>
+                    <span className="text-sm text-gray-500">
+                      {doc.visits} visits
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">{doc.author}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {doc.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </li>
