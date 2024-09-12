@@ -3,15 +3,40 @@ import { useState } from "react";
 type Document = {
   id: number;
   title: string;
+  author: string;
   tags: string[];
   visits: number;
 };
 
 const documents: Document[] = [
-  { id: 1, title: "Document 1", tags: ["finance", "tax"], visits: 120 },
-  { id: 2, title: "Document 2", tags: ["legal", "contract"], visits: 98 },
-  { id: 3, title: "Document 3", tags: ["education", "syllabus"], visits: 45 },
-  { id: 4, title: "Document 4", tags: ["health", "insurance"], visits: 150 },
+  {
+    id: 1,
+    title: "Document 1",
+    author: "John Doe",
+    tags: ["finance", "tax"],
+    visits: 120,
+  },
+  {
+    id: 2,
+    title: "Document 2",
+    author: "Jane Smith",
+    tags: ["legal", "contract"],
+    visits: 98,
+  },
+  {
+    id: 3,
+    title: "Document 3",
+    author: "Alice Johnson",
+    tags: ["education", "syllabus"],
+    visits: 45,
+  },
+  {
+    id: 4,
+    title: "Document 4",
+    author: "Bob Brown",
+    tags: ["health", "insurance"],
+    visits: 150,
+  },
 ];
 
 export default function LandingPage() {
@@ -23,7 +48,7 @@ export default function LandingPage() {
     setSearchTerm(value);
 
     if (value) {
-      const keywords = value.split(" "); // Split the sentence into individual words (keywords)
+      const keywords = value.split(" ");
 
       setSearchResults(
         documents.filter((doc) =>
@@ -74,15 +99,34 @@ export default function LandingPage() {
         )}
 
         <div>
-          <h2 className="text-2xl font-semibold">Most Visited Documents:</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            Most Visited Documents
+          </h2>
           {mostVisitedDocs.length > 0 ? (
-            <ul className="list-disc list-inside mt-2 text-left">
-              {mostVisitedDocs.map((doc) => (
-                <li key={doc.id} className="mt-2">
-                  {doc.title} - {doc.visits} visits
-                </li>
+            <div className="grid gap-4">
+              {mostVisitedDocs.map((doc, index) => (
+                <div key={doc.id} className="bg-gray-50 p-4 rounded-lg shadow">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xl font-semibold">#{index + 1}</span>
+                    <span className="text-sm text-gray-600">
+                      {doc.visits} visits
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-medium mb-1">{doc.title}</h3>
+                  <p className="text-sm text-gray-600">Author: {doc.author}</p>
+                  <div className="mt-2">
+                    {doc.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
             <p>No documents available.</p>
           )}
