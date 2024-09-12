@@ -49,7 +49,6 @@ export default function LandingPage() {
 
     if (value) {
       const keywords = value.split(" ");
-
       setSearchResults(
         documents.filter((doc) =>
           keywords.some(
@@ -83,50 +82,48 @@ export default function LandingPage() {
           />
         </div>
 
-        {searchResults.length > 0 ? (
+        {searchResults.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold">Search Results:</h2>
-            <ul className="list-disc list-inside mt-2 text-left">
+            <h2 className="text-2xl font-semibold mb-2">Search Results:</h2>
+            <ul className="space-y-2">
               {searchResults.map((doc) => (
-                <li key={doc.id} className="mt-2">
-                  {doc.title}
+                <li key={doc.id} className="bg-gray-50 p-2 rounded text-left">
+                  <span className="font-medium">{doc.title}</span> -{" "}
+                  {doc.author}
+                  <div className="text-xs text-gray-500">
+                    {doc.tags.join(", ")}
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
-        ) : (
-          searchTerm && <p>No search results found.</p>
+        )}
+
+        {searchTerm && searchResults.length === 0 && (
+          <p>No search results found.</p>
         )}
 
         <div>
-          <h2 className="text-2xl font-semibold mb-4">
+          <h2 className="text-2xl font-semibold mb-2">
             Most Visited Documents
           </h2>
           {mostVisitedDocs.length > 0 ? (
-            <div className="grid gap-4">
+            <ul className="space-y-2">
               {mostVisitedDocs.map((doc, index) => (
-                <div key={doc.id} className="bg-gray-50 p-4 rounded-lg shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xl font-semibold">#{index + 1}</span>
-                    <span className="text-sm text-gray-600">
-                      {doc.visits} visits
-                    </span>
+                <li
+                  key={doc.id}
+                  className="bg-gray-50 p-2 rounded flex items-center text-left"
+                >
+                  <span className="font-bold mr-2 text-lg">{index + 1}.</span>
+                  <div className="flex-grow">
+                    <div className="font-medium">{doc.title}</div>
+                    <div className="text-sm text-gray-600">
+                      {doc.author} · {doc.visits} visits
+                    </div>
                   </div>
-                  <h3 className="text-lg font-medium mb-1">{doc.title}</h3>
-                  <p className="text-sm text-gray-600">Author: {doc.author}</p>
-                  <div className="mt-2">
-                    {doc.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
             <p>No documents available.</p>
           )}
