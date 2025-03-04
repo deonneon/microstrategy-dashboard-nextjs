@@ -1,0 +1,43 @@
+<html>
+  <script src="{YOUR_LIBRARY_SERVER_URL}/javascript/embeddinglib.js"></script>
+  <div id="LibraryHomePageContainer"></div>
+  <script>
+    microstrategy.embeddingContexts.embedDossierConsumptionPage({
+      placeholder: document.getElementById("LibraryHomePageContainer"),
+      serverUrl: "https://demo.microstrategy.com/MicroStrategyLibrary",
+      projectId: "B19DEDCC11D4E0EFC000EB9495D0F44F",
+      objectId: "D9AB379D11EC92C1D9DC0080EFD415BB",
+      enableCustomAuthentication: true,
+      customAuthenticationType:
+        microstrategy.dossier.CustomAuthenticationType.AUTH_TOKEN,
+      getLoginToken: () => {
+        return new Promise((resolve, reject) => {
+          const loginUrl =
+            "https://demo.microstrategy.com/MicroStrategyLibrary/api/auth/saml"; // Adjust URL as needed
+
+          // Open login page in a new tab
+          const newTab = window.open(loginUrl, "_blank");
+
+          // Poll localStorage to check for token
+          const tokenCheckInterval = setInterval(() => {
+            const token = localStorage.getItem("authToken");
+            if (token) {
+              clearInterval(tokenCheckInterval);
+              localStorage.removeItem("authToken"); // Clean up
+              resolve(token);
+            }
+          }, 500);
+
+          // Handle tab closure without authentication
+          const tabCheckInterval = setInterval(() => {
+            if (newTab.closed) {
+              clearInterval(tabCheckInterval);
+              clearInterval(tokenCheckInterval);
+              reject(new Error("Authentication tab closed without login"));
+            }
+          }, 500);
+        });
+      },
+    });
+  </script>
+</html>
