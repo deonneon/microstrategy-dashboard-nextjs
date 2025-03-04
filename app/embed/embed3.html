@@ -24,3 +24,37 @@
     },
   });
 </script>
+
+<script>
+  setTimeout(() => {
+    const iframe = document.querySelector("#dashboardContainer iframe");
+    if (iframe) {
+      iframe.setAttribute(
+        "sandbox",
+        "allow-scripts allow-same-origin allow-forms"
+      );
+    }
+  }, 2000);
+</script>
+
+<script>
+  const observer = new MutationObserver((mutationsList) => {
+    for (const mutation of mutationsList) {
+      if (mutation.addedNodes.length) {
+        mutation.addedNodes.forEach((node) => {
+          if (node.tagName === "IFRAME") {
+            node.setAttribute(
+              "sandbox",
+              "allow-scripts allow-same-origin allow-forms"
+            );
+          }
+        });
+      }
+    }
+  });
+
+  observer.observe(document.getElementById("dashboardContainer"), {
+    childList: true,
+    subtree: true,
+  });
+</script>
