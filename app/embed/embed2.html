@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Embed MicroStrategy Web Dashboard</title>
+    <style>
+      /* Basic styling for the iframe */
+      #dashboardContainer {
+        width: 100%;
+        height: 800px;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Embedded MicroStrategy Web Dashboard</h1>
+    <div>
+      <iframe id="dashboardContainer" src=""></iframe>
+    </div>
+
+    <script>
+      // Configuration variables - replace with your own values
+      const microstrategyWebUrl = "https://yourserver/MicroStrategy"; // Your MicroStrategy Web server URL
+      const projectId = "B19DEDCC11D4E0EFC000EB9495D0F44F"; // Replace with your project ID
+      const dashboardId = "D1234567890ABCDEF1234567890ABCDE"; // Replace with your dashboard/document ID
+      const username = "yourUsername"; // Replace with your username
+      const password = "yourPassword"; // Replace with your password (for demo; use secure auth in production)
+
+      // Construct the embedding URL for MicroStrategy Web
+      const embeddingUrl = `${microstrategyWebUrl}/servlet/mstrWeb?evt=2048001&src=mstrWeb.2048001&documentID=${dashboardId}&projectID=${projectId}&usr=${username}&pwd=${password}`;
+
+      // Set the iframe source to the constructed URL
+      document.getElementById("dashboardContainer").src = embeddingUrl;
+    </script>
+  </body>
+</html>

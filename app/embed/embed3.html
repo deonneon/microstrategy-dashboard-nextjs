@@ -1,0 +1,26 @@
+<div id="dashboardContainer"></div>
+<script src="https://yourserver/MicroStrategy/plugins/embeddingSDK/javascript/mstr_embed.js"></script>
+<script>
+  microstrategy.dossier.create({
+    placeholder: document.getElementById("dashboardContainer"),
+    url: `${microstrategyWebUrl}/servlet/mstrWeb?evt=2048001&documentID=${dashboardId}&projectID=${projectId}`,
+    enableCustomAuthentication: true,
+    customAuthentication: {
+      username: username,
+      password: password,
+    },
+  });
+</script>
+
+<div id="dashboardContainer"></div>
+<script src="https://yourserver/MicroStrategyLibrary/javascript/embeddinglib.js"></script>
+<script>
+  microstrategy.dossier.create({
+    url: "https://yourserver/MicroStrategyLibrary/app/yourProjectID/yourDossierID",
+    placeholder: document.getElementById("dashboardContainer"),
+    enableCustomAuthentication: true,
+    customAuthentication: {
+      mode: microstrategy.dossier.AuthenticationModes.SAML,
+    },
+  });
+</script>

@@ -1,0 +1,117 @@
+Saml silent authentication url string
+
+<iframe src="https://your-microstrategy-web-url?silent=true"></iframe>
+
+<iframe
+  id="microstrategyIframe"
+  src="https://your-microstrategy-web-url"
+></iframe>
+———
+<script>
+  setInterval(function () {
+    document.getElementById("microstrategyIframe").src =
+      document.getElementById("microstrategyIframe").src;
+  }, 25 * 60 * 1000); // Refresh every 25 minutes
+</script>
+———
+<iframe src="https://your-microstrategy-web-url" style="display: none"></iframe>
+<iframe src="https://your-microstrategy-web-url/dashboard"></iframe>
+——— Add a pop-up button ———
+<script>
+  setInterval(function () {
+    fetch("https://your-microstrategy-web-url", { credentials: "include" });
+  }, 25 * 60 * 1000); // Ping every 25 minutes
+</script>
+——— Open your browser’s Developer Tools (F12) → Network tab, then refresh the
+Confluence page after 30 minutes. Look at the iframe’s HTTP requests—does it get
+a 401/403 error or a redirect to the login page? This will confirm if it’s
+purely a token expiration issue. ————
+
+<iframe
+  style="display: none"
+  src="https://<microstrategy-domain>/MicroStrategy/servlet/KeepSessionAlive"
+></iframe>
+where KeepSessionAlive is any valid MicroStrategy endpoint that requires an
+authenticated session. If the IdP session is still valid, it will automatically
+renew the MicroStrategy session behind the scenes—no user action needed. ————
+microstrategy.embeddingContexts.embedLibraryPage({ serverUrl:
+"https://your-microstrategy-server/MicroStrategyLibrary", placeholder:
+document.getElementById("LibraryHomePageContainer"),enableCustomAuthentication:
+true, customAuthenticationType:
+microstrategy.dossier.CustomAuthenticationType.AUTH_TOKEN, getLoginToken: ()
+=>microstrategy.auth.samlLogin("https://your-microstrategy-server/MicroStrategyLibrary"),
+});
+
+<html>
+  <![CDATA[ <iframe
+  src="https://microstrategy.corporate.com/MicroStrategy/servlet/MicroStrategyWeb"></iframe>
+  ]]>
+</html>
+
+<iframe
+  src="https://microstrategy.corporate.com/%4DicroStrategy/servlet/MicroStrategyWeb"
+></iframe>
+
+<!-- Yes, you can use the MicroStrategy Embedding SDK to integrate MicroStrategy
+dashboards (formerly known as dossiers) into your web applications. The
+Embedding SDK allows you to embed responsive dashboards directly into your web
+pages, providing functionalities such as navigation control, filtering, and
+event handling. -->
+<script src="https://yourserver/MicroStrategy/plugins/embeddingSDK/javascript/mstr_embed.js"></script>
+<div id="dossierContainer"></div>
+<script>
+  const placeholderDiv = document.getElementById("dossierContainer");
+  microstrategy.dossier.create({
+    placeholder: placeholderDiv,
+    url: "{YOUR_LIBRARY_SERVER_URL}/app/{PROJECT_ID}/{DOSSIER_ID}",
+  });
+</script>
+
+<!-- Why Other Options Won’t Work
+
+Keeping the Session Alive: Periodic requests from within the iframe or parent page are blocked by cross-origin policies, and MicroStrategy likely doesn’t offer a keep-alive API for SAML sessions.
+Forcing Re-Authentication in the Iframe: Redirects to the IdP within the iframe fail due to framing restrictions, as observed with the login error.
+Alternative Embedding: Using MicroStrategy’s REST API or token-based access might bypass SAML issues, but this requires significant development and may not support full dashboard interactivity. -->
+
+<!-- Button -->
+<button id="refresh-dashboard">Refresh Dashboard</button>
+<iframe
+  id="mstr-iframe"
+  src="https://your-microstrategy-url/dashboard"
+  width="800"
+  height="600"
+></iframe>
+
+<script>
+  document
+    .getElementById("refresh-dashboard")
+    .addEventListener("click", function () {
+      // Open a popup to the MicroStrategy login URL
+      var popup = window.open(
+        "https://your-microstrategy-url/login",
+        "mstrPopup",
+        "width=500,height=500"
+      );
+
+      // Function to check when the popup has finished authentication
+      var checkPopup = setInterval(function () {
+        if (!popup || popup.closed) {
+          // Popup closed manually or unexpectedly
+          clearInterval(checkPopup);
+          return;
+        }
+        try {
+          // Check if the popup has redirected to a MicroStrategy page (indicating auth success)
+          if (popup.location.href.indexOf("your-microstrategy-url") !== -1) {
+            clearInterval(checkPopup);
+            popup.close();
+            // Refresh the iframe with the renewed session
+            var iframe = document.getElementById("mstr-iframe");
+            iframe.src = iframe.src; // Reloads the same URL
+          }
+        } catch (e) {
+          // Cross-origin error expected until redirect completes
+        }
+      }, 500); // Check every 500ms
+    });
+</script>
